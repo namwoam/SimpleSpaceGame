@@ -11,8 +11,8 @@ import {
     LensflareElement,
 } from 'three/examples/jsm/objects/Lensflare.js'
 
-export enum upgrades{
-    DASH , JUMP , SPEED , BULLET_COUNT , BULLET_SPEED
+export enum upgrades {
+    DASH, JUMP, SPEED, BULLET_COUNT, BULLET_SPEED
 }
 
 export default class Car {
@@ -75,7 +75,7 @@ export default class Car {
     private moons: { [id: string]: Moon }
 
     private upsideDownCounter = -1
-
+    private dash_ready = false
     private listener: THREE.AudioListener
     carSound: THREE.PositionalAudio
     private shootSound: THREE.PositionalAudio
@@ -462,6 +462,17 @@ export default class Car {
             this.bulletMesh[i].add(this.lensflares[i])
         }
     }
+    dash() {
+        console.log("request dash")
+        if (this.dash_ready === false) {
+            return
+        }
+        console.log("dashing")
+        this.dash_ready = false
+        this.forwardVelocity = 400.0 + 120*this.dash_level
+        setTimeout(() => { this.forwardVelocity = 10.0 }, 300)
+        setTimeout(() => { this.dash_ready = true }, 1000*(3-this.dash_level*0.6))
+    }
     updateScore(s: number) {
         this.score = s
         this.askUpgrade()
@@ -488,34 +499,35 @@ export default class Car {
 
         return this.bulletId
     }
-    upgrade(target:upgrades){
-        this.past_upgrade +=1
-        if (target === upgrades.DASH){
-            this.dash_level +=1
+    upgrade(target: upgrades) {
+        this.past_upgrade += 1
+        if (target === upgrades.DASH) {
+            this.dash_level += 1
+            this.dash_ready = true
         }
-        else if (target === upgrades.JUMP){
-            this.jump_level +=1
+        else if (target === upgrades.JUMP) {
+            this.jump_level += 1
         }
-        else if (target === upgrades.SPEED){
-            this.speed_level +=1
+        else if (target === upgrades.SPEED) {
+            this.speed_level += 1
         }
-        else if (target === upgrades.BULLET_COUNT){
-            this.bullet_count_level +=1
-            if (this.bullet_count_level == 0){
+        else if (target === upgrades.BULLET_COUNT) {
+            this.bullet_count_level += 1
+            if (this.bullet_count_level == 0) {
                 this.limit_bullet_count = 3
             }
-            else if (this.bullet_count_level == 1){
+            else if (this.bullet_count_level == 1) {
                 this.limit_bullet_count = 8
             }
-            else if (this.bullet_count_level == 2){
+            else if (this.bullet_count_level == 2) {
                 this.limit_bullet_count = 14
             }
-            else if (this.bullet_count_level == 1){
+            else if (this.bullet_count_level == 1) {
                 this.limit_bullet_count = 20
             }
         }
-        else if (target === upgrades.BULLET_SPEED){
-            this.bullet_speed_level +=1
+        else if (target === upgrades.BULLET_SPEED) {
+            this.bullet_speed_level += 1
         }
 
     }
@@ -549,7 +561,7 @@ export default class Car {
             //console.log(this.cars[id].bullet.position)
             v = new THREE.Vector3(0, 0, -1)
             v.applyQuaternion(q)
-            v.multiplyScalar(40+this.bullet_speed_level*20)
+            v.multiplyScalar(40 + this.bullet_speed_level * 20)
             this.bulletBody[bulletId].velocity.set(v.x, v.y, v.z)
             this.bulletBody[bulletId].wakeUp()
 

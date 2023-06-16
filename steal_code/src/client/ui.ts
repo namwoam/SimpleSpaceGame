@@ -164,7 +164,7 @@ export default class UI {
             car.thrusting = false
             car.steering = false
             if (this.keyMap['w'] || this.keyMap['ArrowUp']) {
-                if (car.forwardVelocity <= 40.0) car.forwardVelocity += 1.25
+                if (car.forwardVelocity <= 20.0 + car.speed_level *15.0) car.forwardVelocity += (1.25 + car.speed_level*0.6) 
                 car.thrusting = true
             }
             if (this.keyMap['s'] || this.keyMap['ArrowDown']) {
@@ -186,6 +186,9 @@ export default class UI {
                 if (car.forwardVelocity < 0) {
                     car.forwardVelocity += 2.5
                 }
+            }
+            if (this.keyMap["k"]){
+                car.dash()
             }
 
             if (car.display_upgrade_hint){
