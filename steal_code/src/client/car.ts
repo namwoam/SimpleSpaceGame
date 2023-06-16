@@ -11,13 +11,22 @@ import {
     LensflareElement,
 } from 'three/examples/jsm/objects/Lensflare.js'
 
+export enum upgrades{
+    DASH , JUMP , SPEED , BULLET_COUNT , BULLET_SPEED
+}
+
 export default class Car {
     earth: null | Earth = null
     //private scene: THREE.Scene
     private camera: THREE.PerspectiveCamera
     private physics: Physics
     private socket: Socket
-
+    dash_level = 0
+    jump_level = 0
+    speed_level = 0
+    bullet_count_level = 0
+    bullet_speed_level = 0
+    limit_bullet_count = 3
     frameMesh = new THREE.Mesh()
     turretMesh = new THREE.Mesh()
     private turretPivot = new THREE.Object3D()
@@ -44,12 +53,13 @@ export default class Car {
     private constraintRF: CANNON.HingeConstraint
     private constraintLB: CANNON.HingeConstraint
     private constraintRB: CANNON.HingeConstraint
-
-    bulletMesh = [new THREE.Mesh(), new THREE.Mesh(), new THREE.Mesh()]
+    private self_scene: THREE.Scene
+    bulletMesh: Array<THREE.Mesh> = []
     private bulletBody: CANNON.Body[] = []
-    lastBulletCounter = [-1, -1, -1] //used to decide if a bullet should instantly be repositioned or smoothly lerped
-    private bulletActivated = [false, false, false]
+    lastBulletCounter: Array<number> = [] //used to decide if a bullet should instantly be repositioned or smoothly lerped
+    private bulletActivated: Array<boolean> = []
     private bulletId = -1
+    display_upgrade_hint = false
 
     thrusting = false
     steering = false
@@ -59,6 +69,7 @@ export default class Car {
     enabled = true
 
     private score: number = 0
+    private past_upgrade: number = 0
 
     private players: { [id: string]: Player }
     private moons: { [id: string]: Moon }
@@ -71,9 +82,10 @@ export default class Car {
 
     cameraTempPosition: THREE.Object3D
 
-    private lensflares = [new Lensflare(), new Lensflare(), new Lensflare()]
+    private lensflares: Array<Lensflare> = []
     //debugMesh: THREE.Mesh
-
+    private bulletCount = 20
+    colorcode = 0xffffff
     constructor(
         scene: THREE.Scene,
         camera: THREE.PerspectiveCamera,
@@ -83,6 +95,7 @@ export default class Car {
         socket: Socket,
         listener: THREE.AudioListener
     ) {
+        this.self_scene = scene
         this.camera = camera
         this.physics = physics
         this.players = players
@@ -121,16 +134,42 @@ export default class Car {
         pipesMaterial.metalness = 1
 
         const flareTexture = new THREE.TextureLoader().load('img/lensflare0.png')
+
+        this.bulletMesh = []
+        this.lastBulletCounter = []
+        this.lensflares = []
+        this.bulletActivated = []
+        for (let i = 0; i < this.bulletCount; i++) {
+            this.bulletMesh.push(new THREE.Mesh())
+            this.lastBulletCounter.push(-1)
+            this.lensflares.push(new Lensflare())
+            this.bulletActivated.push(false)
+        }
         this.lensflares.forEach((l) => {
             l.addElement(
                 new LensflareElement(
                     flareTexture,
                     200,
                     0,
-                    new THREE.Color(0x00ff00)
+                    new THREE.Color(this.colorcode)
                 )
             )
         })
+        //bullets
+        for (let i = 0; i < this.bulletCount; i++) {
+            this.bulletMesh[i].geometry = new THREE.SphereGeometry(
+                0.3,
+                2,
+                2
+            )
+            this.bulletMesh[i].material = new THREE.MeshBasicMaterial({
+                color: 0xffffff,
+                wireframe: true,
+            })
+            this.bulletMesh[i].castShadow = true
+            scene.add(this.bulletMesh[i])
+            this.bulletMesh[i].add(this.lensflares[i])
+        }
 
         const loader = new GLTFLoader()
         loader.load(
@@ -159,22 +198,6 @@ export default class Car {
                 this.chaseCam.position.set(0, 1.5, 250)
                 this.chaseCamPivot.add(this.chaseCam)
                 this.frameMesh.add(this.chaseCamPivot)
-
-                //bullets
-                for (let i = 0; i < 3; i++) {
-                    this.bulletMesh[i].geometry = new THREE.SphereGeometry(
-                        0.3,
-                        2,
-                        2
-                    )
-                    this.bulletMesh[i].material = new THREE.MeshBasicMaterial({
-                        color: 0x00ff00,
-                        wireframe: true,
-                    })
-                    this.bulletMesh[i].castShadow = true
-                    scene.add(this.bulletMesh[i])
-                    this.bulletMesh[i].add(this.lensflares[i])
-                }
 
                 loader.load(
                     'models/tyre.glb',
@@ -322,7 +345,7 @@ export default class Car {
         this.constraintRB.enableMotor()
 
         //add bullets
-        for (let i = 0; i < 3; i++) {
+        for (let i = 0; i < this.bulletCount; i++) {
             this.bulletBody[i] = new CANNON.Body({ mass: 1 }) //, material: wheelMaterial })
             this.bulletBody[i].addShape(new CANNON.Sphere(0.15))
             this.bulletBody[i].position.set(i - 1, 1, -1)
@@ -415,15 +438,86 @@ export default class Car {
             }
         }, 1000)
     }
-
+    rebuldFlare() {
+        console.log("rebuild flare")
+        const flareTexture = new THREE.TextureLoader().load('img/lensflare0.png')
+        this.lensflares = []
+        for (let i = 0; i < this.bulletCount; i++) {
+            this.bulletMesh[i].remove(this.bulletMesh[i].children[0])
+            this.lensflares.push(new Lensflare())
+        }
+        console.log(this.lensflares)
+        this.lensflares.forEach((l) => {
+            l.addElement(
+                new LensflareElement(
+                    flareTexture,
+                    200,
+                    0,
+                    new THREE.Color(this.colorcode)
+                )
+            )
+        })
+        //bullets
+        for (let i = 0; i < this.bulletCount; i++) {
+            this.bulletMesh[i].add(this.lensflares[i])
+        }
+    }
+    updateScore(s: number) {
+        this.score = s
+        this.askUpgrade()
+    }
+    askUpgrade() {
+        let flag = false
+        if (this.past_upgrade == 0 && this.score > 100) {
+            flag = true
+        }
+        else if (this.past_upgrade == 1 && this.score > 300) {
+            flag = true
+        }
+        else if (this.past_upgrade == 2 && this.score > 500) {
+            flag = true
+        }
+        this.display_upgrade_hint = flag
+    }
     getNextBulletId(): number {
         this.bulletId += 1
-        if (this.bulletId > 2) {
+        if (this.bulletId > this.limit_bullet_count - 1) {
             this.bulletId = 0
         }
         this.lastBulletCounter[this.bulletId] += 1
 
         return this.bulletId
+    }
+    upgrade(target:upgrades){
+        this.past_upgrade +=1
+        if (target === upgrades.DASH){
+            this.dash_level +=1
+        }
+        else if (target === upgrades.JUMP){
+            this.jump_level +=1
+        }
+        else if (target === upgrades.SPEED){
+            this.speed_level +=1
+        }
+        else if (target === upgrades.BULLET_COUNT){
+            this.bullet_count_level +=1
+            if (this.bullet_count_level == 0){
+                this.limit_bullet_count = 3
+            }
+            else if (this.bullet_count_level == 1){
+                this.limit_bullet_count = 8
+            }
+            else if (this.bullet_count_level == 2){
+                this.limit_bullet_count = 14
+            }
+            else if (this.bullet_count_level == 1){
+                this.limit_bullet_count = 20
+            }
+        }
+        else if (target === upgrades.BULLET_SPEED){
+            this.bullet_speed_level +=1
+        }
+
     }
 
     shoot() {
@@ -455,7 +549,7 @@ export default class Car {
             //console.log(this.cars[id].bullet.position)
             v = new THREE.Vector3(0, 0, -1)
             v.applyQuaternion(q)
-            v.multiplyScalar(40)
+            v.multiplyScalar(40+this.bullet_speed_level*20)
             this.bulletBody[bulletId].velocity.set(v.x, v.y, v.z)
             this.bulletBody[bulletId].wakeUp()
 
@@ -572,7 +666,7 @@ export default class Car {
             this.physics.world.addBody(this.wheelRFBody)
             this.physics.world.addBody(this.wheelLBBody)
             this.physics.world.addBody(this.wheelRBBody)
-            for (let i = 0; i < 3; i++) {
+            for (let i = 0; i < this.bulletCount; i++) {
                 this.physics.world.addBody(this.bulletBody[i])
             }
             this.enabled = true
@@ -649,7 +743,7 @@ export default class Car {
         this.constraintLF.axisA.z = this.rightVelocity
         this.constraintRF.axisA.z = this.rightVelocity
 
-        for (let i = 0; i < 3; i++) {
+        for (let i = 0; i < this.bulletCount; i++) {
             this.bulletMesh[i].position.x = this.bulletBody[i].position.x
             this.bulletMesh[i].position.y = this.bulletBody[i].position.y
             this.bulletMesh[i].position.z = this.bulletBody[i].position.z
@@ -676,6 +770,26 @@ export default class Car {
         this.wheelLBBody.velocity = v.scale(Math.random() * 25)
         this.wheelRBBody.velocity = v.scale(Math.random() * 25)
         this.frameBody.velocity = v.scale(Math.random() * 100)
+    }
+
+    updateColor(c: number) {
+        if (c === this.colorcode) {
+            return
+        }
+        this.colorcode = c
+        for (let i = 0; i < this.bulletCount; i++) {
+            if (Array.isArray(this.bulletMesh[i].material)) {
+                (this.bulletMesh[i].material as Array<THREE.MeshBasicMaterial>).forEach(mat => {
+                    mat.color.setHex(this.colorcode)
+                });
+            }
+            else {
+                (this.bulletMesh[i].material as THREE.MeshBasicMaterial).color.setHex(this.colorcode)
+            }
+
+        }
+        this.rebuldFlare()
+
     }
 
     fix() {

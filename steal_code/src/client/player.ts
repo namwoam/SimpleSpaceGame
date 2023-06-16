@@ -9,6 +9,7 @@ import {
 import { CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer'
 
 export default class Player {
+    private bulletCount = 20
     private scene: THREE.Scene
     private physics: Physics
     private frameMesh = new THREE.Mesh()
@@ -18,8 +19,8 @@ export default class Player {
     private wheelRFMesh = new THREE.Group()
     private wheelLBMesh = new THREE.Group()
     private wheelRBMesh = new THREE.Group()
-    private bulletMesh = [new THREE.Mesh(), new THREE.Mesh(), new THREE.Mesh()]
-    private lastBulletCounter = [-1, -1, -1] //used to decide if a bullet should instantly be repositioned or smoothly lerped
+    private bulletMesh:Array<THREE.Mesh> = []
+    private lastBulletCounter:Array<Number> = [] //used to decide if a bullet should instantly be repositioned or smoothly lerped
 
     partIds: number[] = []
 
@@ -32,6 +33,7 @@ export default class Player {
     enabled = false
     private screenName = ''
     private lastScreenName = ''
+    private colorcode = 0xffffff
 
     private targetPosFrame = new THREE.Vector3()
     private targetPosTurret = new THREE.Vector3()
@@ -44,7 +46,8 @@ export default class Player {
     carSound: THREE.PositionalAudio
     private shootSound: THREE.PositionalAudio
 
-    private lensflares = [new Lensflare(), new Lensflare(), new Lensflare()]
+    private lensflares:Array<Lensflare> = []
+    
 
     private annotationDiv = document.createElement('div')
 
@@ -56,6 +59,12 @@ export default class Player {
         this.scene = scene
         this.physics = physics
         this.listener = listener
+
+        for (let i=0;i<this.bulletCount;i++){
+            this.lensflares.push(new Lensflare())
+            this.lastBulletCounter.push(-1)
+            this.bulletMesh.push(new THREE.Mesh())
+        }
 
         const pipesMaterial = new THREE.MeshStandardMaterial()
         pipesMaterial.color = new THREE.Color('#ffffff')
@@ -115,7 +124,7 @@ export default class Player {
                 scene.add(this.turretMesh)
 
                 // bullets
-                for (let i = 0; i < 3; i++) {
+                for (let i = 0; i < this.bulletCount; i++) {
                     this.bulletMesh[i].geometry = new THREE.SphereGeometry(
                         0.3,
                         2,
@@ -229,11 +238,13 @@ export default class Player {
 
     updateTargets(data: any) {
         this.screenName = data.sn
+        this.colorcode = data.cd
         if (this.lastScreenName !== this.screenName) {
             //changed
             this.annotationDiv.innerHTML = this.screenName
             this.lastScreenName = this.screenName
         }
+        this.annotationDiv.style.color = "#"+this.colorcode.toString(16)
 
         this.targetPosFrame.set(data.p.x, data.p.y, data.p.z)
         this.targetPosTurret.set(data.tp.x, data.tp.y, data.tp.z)
@@ -292,7 +303,7 @@ export default class Player {
             0.2
         )
 
-        for (let i = 0; i < 3; i++) {
+        for (let i = 0; i < this.bulletCount; i++) {
             if (data.b[i].c > this.lastBulletCounter[i]) {
                 this.lastBulletCounter[i] = data.b[i].c
                 if (this.shootSound.isPlaying) {
@@ -305,7 +316,24 @@ export default class Player {
                 data.b[i].p.x,
                 data.b[i].p.y,
                 data.b[i].p.z
-            )
+            );
+            if (Array.isArray(this.bulletMesh[i].material)){
+                (this.bulletMesh[i].material as Array<THREE.MeshBasicMaterial> ).forEach(mat => {
+                    mat.color.setHex(this.colorcode)
+                });
+            }
+            else{
+                (this.bulletMesh[i].material as THREE.MeshBasicMaterial).color.setHex(this.colorcode)
+            }
+            if (Array.isArray(this.lensflares[i].material)){
+                (this.lensflares[i].material as Array<THREE.MeshBasicMaterial> ).forEach(mat => {
+                    mat.color.setHex(this.colorcode)
+                });
+            }
+            else{
+                (this.lensflares[i].material as THREE.MeshBasicMaterial).color.setHex(this.colorcode)
+            }
+            
         }
 
         this.carSound.setPlaybackRate(Math.abs(data.v / 50) + Math.random() / 9)
@@ -379,8 +407,8 @@ export default class Player {
     }
 
     dispose() {
-        for (let i = 0; i < 3; i++) {
-            ;(this.bulletMesh[i].material as THREE.MeshBasicMaterial).dispose()
+        for (let i = 0; i < this.bulletCount; i++) {
+            ; (this.bulletMesh[i].material as THREE.MeshBasicMaterial).dispose()
             this.lensflares[i].dispose()
             this.bulletMesh[i].geometry.dispose()
             this.scene.remove(this.bulletMesh[i])

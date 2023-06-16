@@ -1,6 +1,7 @@
 import Game from './game'
 import { TWEEN } from 'three/examples/jsm/libs/tween.module.min'
 import { Vec2, XYController } from './XYController'
+import { upgrades } from './car'
 
 export default class UI {
     menuActive: boolean
@@ -50,11 +51,11 @@ export default class UI {
         ) as HTMLDivElement
 
         if (this.game.isMobile) {
-            ;(
+            ; (
                 document.getElementById('mobileCommands') as HTMLDivElement
             ).style.display = 'block'
         } else {
-            ;(
+            ; (
                 document.getElementById('desktopCommands') as HTMLDivElement
             ).style.display = 'block'
         }
@@ -101,12 +102,12 @@ export default class UI {
                     )
                     this.renderer.shadowMap.autoUpdate = true
                     this.renderer.shadowMap.needsUpdate = true
-                    ;(this.game.earth.light.shadow.map as any) = null
+                        ; (this.game.earth.light.shadow.map as any) = null
                 } else {
                     //this.renderer.shadowMap.enabled = false
                     this.renderer.shadowMap.autoUpdate = false
                     this.renderer.shadowMap.needsUpdate = true
-                    ;(this.game.earth.light.shadow.map as any) = null
+                        ; (this.game.earth.light.shadow.map as any) = null
                     this.renderer.clear()
                 }
             },
@@ -114,7 +115,7 @@ export default class UI {
         )
 
         this.shadowMapSize.addEventListener('change', () => {
-            ;(this.game.earth.light.shadow.map as any) = null
+            ; (this.game.earth.light.shadow.map as any) = null
             this.game.earth.light.shadow.mapSize.width = Number(
                 this.shadowMapSize.value
             )
@@ -130,25 +131,32 @@ export default class UI {
         })
 
         document.addEventListener('pointerlockchange', this.lockChangeAlert, false)
-        ;(
-            document.getElementById('screenNameInput') as HTMLInputElement
-        ).addEventListener('keyup', (e) => {
-            if (e.key === 'Enter') blur()
-        })
-        ;(
-            document.getElementById('screenNameInput') as HTMLInputElement
-        ).addEventListener('change', (e) => {
-            var letterNumber = /^[0-9a-zA-Z]+$/
-            var value = (e.target as HTMLFormElement).value
-            if (value.match(letterNumber) && value.length <= 12) {
-                game.socket.emit(
-                    'updateScreenName',
-                    (e.target as HTMLFormElement).value
-                )
-            } else {
-                alert('Alphanumeric screen names only please. Max length 12')
-            }
-        })
+            ; (
+                document.getElementById('screenNameInput') as HTMLInputElement
+            ).addEventListener('keyup', (e) => {
+                if (e.key === 'Enter') blur()
+            })
+            ; (
+                document.getElementById('screenNameInput') as HTMLInputElement
+            ).addEventListener('change', (e) => {
+                var letterNumber = /^[0-9a-zA-Z]+$/
+                var value = (e.target as HTMLFormElement).value
+                if (value.match(letterNumber) && value.length <= 12) {
+                    game.socket.emit(
+                        'updateScreenName',
+                        (e.target as HTMLFormElement).value
+                    )
+                } else {
+                    alert('Alphanumeric screen names only please. Max length 12')
+                }
+            })
+            ; (document.getElementById("colorPicker") as HTMLInputElement).addEventListener("change", (e) => { 
+                let colorString:string = (e.target as HTMLFormElement).value
+                let colorNumber:number = (parseInt(colorString.substring(1), 16))
+                game.socket.emit("updatePlayerColor" , colorNumber)
+                console.log("color changed")
+            })
+
 
         this.keyCheckInterval = setInterval(() => {
             //key presses are checked here once every 50ms.
@@ -177,6 +185,24 @@ export default class UI {
                 }
                 if (car.forwardVelocity < 0) {
                     car.forwardVelocity += 2.5
+                }
+            }
+
+            if (car.display_upgrade_hint){
+                if (this.keyMap["1"]){
+                    car.upgrade(upgrades.DASH)
+                }
+                if (this.keyMap["2"]){
+                    car.upgrade(upgrades.JUMP)
+                }
+                if (this.keyMap["3"]){
+                    car.upgrade(upgrades.SPEED)
+                }
+                if (this.keyMap["4"]){
+                    car.upgrade(upgrades.BULLET_COUNT)
+                }
+                if (this.keyMap["5"]){
+                    car.upgrade(upgrades.BULLET_SPEED)
                 }
             }
 

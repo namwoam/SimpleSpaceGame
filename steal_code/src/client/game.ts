@@ -142,20 +142,15 @@ export default class Game {
                                 q: this.car.wheelRBMesh.quaternion,
                             },
                         ],
-                        b: [
-                            {
-                                p: this.car.bulletMesh[0].position,
-                                c: this.car.lastBulletCounter[0],
-                            },
-                            {
-                                p: this.car.bulletMesh[1].position,
-                                c: this.car.lastBulletCounter[1],
-                            },
-                            {
-                                p: this.car.bulletMesh[2].position,
-                                c: this.car.lastBulletCounter[2],
-                            },
-                        ],
+                        b: 
+                            this.car.bulletMesh.map((_ , index)=>{
+                                return {
+                                    p:this.car.bulletMesh[index].position,
+                                    c:this.car.lastBulletCounter[index]
+                                }
+                                
+                            })
+                        
                     })
                 }, 50)
                 this.ui.updateScoreBoard(recentWinners)
@@ -294,12 +289,13 @@ export default class Game {
             }
 
             let pingStatsHtml = 'Socket Ping Stats<br/><br/>'
+            let upgradeHtml = ""
             Object.keys(gameData.players).forEach((p) => {
                 this.timestamp = Date.now()
                 pingStatsHtml +=
                     gameData.players[p].sn +
                     ' ' +
-                    gameData.players[p].s +
+                    (gameData.players[p].e === true? gameData.players[p].s:"x") +
                     ' ' +
                     (this.timestamp - gameData.players[p].t) +
                     'ms<br/>'
@@ -314,6 +310,13 @@ export default class Game {
                     }
                     this.players[p].updateTargets(gameData.players[p])
                 }
+                else{
+                    this.car.updateColor(gameData.players[p].cd)
+                    this.car.updateScore(gameData.players[p].s)
+                    if (this.car.display_upgrade_hint){
+                        upgradeHtml +=  "<br/> Upgrade available!<br/> <br/> Dash(1)<br/> Jump(2)<br/>Speed(3)<br/>Bullet Count(4)<br/>Bullet Speed(5)"
+                    }
+                }
             })
             Object.keys(gameData.moons).forEach((m) => {
                 if (!this.moons[m]) {
@@ -325,7 +328,7 @@ export default class Game {
             if (!this.isMobile) {
                 ;(
                     document.getElementById('pingStats') as HTMLDivElement
-                ).innerHTML = pingStatsHtml
+                ).innerHTML = pingStatsHtml + upgradeHtml
             }
         })
     }

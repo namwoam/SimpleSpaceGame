@@ -23,7 +23,7 @@ export default class Moon {
 
         scene.add(this.mesh)
 
-        this.body = new CANNON.Body({ mass: 0 })
+        this.body = new CANNON.Body({ mass: 1 })
         this.body.addShape(new CANNON.Sphere(10))
 
         physics.world.addBody(this.body)

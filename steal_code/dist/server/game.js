@@ -31,12 +31,9 @@ class Game {
         this.gamePhase = 0; //0=closed, 1=open
         this.gameId = 0;
         this.gameWinner = '';
+        this.gametick = 0;
         this.recentWinners = [
-            { screenName: 'fcs', score: 120 },
-            { screenName: 'sbcode', score: 110 },
-            { screenName: 'SeanWasEre', score: 100 },
-            { screenName: 'cosmo', score: 90 },
-            { screenName: 'emmy', score: 80 },
+            { screenName: 'coolbangstone', score: 20 },
         ];
         this.winnersCalculated = false;
         this.players = {};
@@ -100,17 +97,20 @@ class Game {
                     this.players[socket.id].w[2].q = message.w[2].q;
                     this.players[socket.id].w[3].p = message.w[3].p;
                     this.players[socket.id].w[3].q = message.w[3].q;
-                    this.players[socket.id].b[0].p = message.b[0].p;
-                    this.players[socket.id].b[0].c = message.b[0].c;
-                    this.players[socket.id].b[1].p = message.b[1].p;
-                    this.players[socket.id].b[1].c = message.b[1].c;
-                    this.players[socket.id].b[2].p = message.b[2].p;
-                    this.players[socket.id].b[2].c = message.b[2].c;
+                    for (let i = 0; i < 20; i++) {
+                        this.players[socket.id].b[i].p = message.b[i].p;
+                        this.players[socket.id].b[i].c = message.b[i].c;
+                    }
                 }
             });
             socket.on('updateScreenName', (screenName) => {
                 if (screenName.match(/^[0-9a-zA-Z]+$/) && screenName.length <= 12) {
                     this.players[socket.id].sn = screenName;
+                }
+            });
+            socket.on('updatePlayerColor', (colorcode) => {
+                if (colorcode.toString(16).match(/[0-9A-Fa-f]{6}/g)) {
+                    this.players[socket.id].cd = colorcode;
                 }
             });
             socket.on('hitCar', (p, pos, dir) => {
@@ -119,7 +119,7 @@ class Game {
                     if (this.players[p] && this.players[p].e) {
                         io.emit('hitCar', { p: p, pos: pos, dir: dir });
                         this.players[p].e = false;
-                        this.players[socket.id].s += 100;
+                        this.players[socket.id].s += this.players[p].s;
                     }
                 }
             });
@@ -129,7 +129,7 @@ class Game {
                     const v = new CANNON.Vec3(dir.x, dir.y, dir.z).scale(Math.random() * 25);
                     this.physics.moons[m].sphereBody.velocity = v;
                     io.emit('hitMoon', pos);
-                    this.players[socket.id].s += 10;
+                    this.players[socket.id].s += 50;
                 }
             });
             socket.on('enable', () => {
@@ -153,6 +153,14 @@ class Game {
                     },
                 });
             });
+            this.gametick += 1;
+            if (this.gametick % 10 == 0) {
+                for (const [_, player] of Object.entries(this.players)) {
+                    if (player.e === true) {
+                        player.s += 1;
+                    }
+                }
+            }
             this.io.emit('gameData', {
                 gameId: this.gameId,
                 gamePhase: this.gamePhase,
@@ -168,7 +176,7 @@ class Game {
             this.gameClock -= 1;
             if (this.gameClock < -5) {
                 this.gamePhase = 1;
-                this.gameClock = 45;
+                this.gameClock = 300;
                 this.gameWinner = '';
                 this.gameId += 1;
                 this.winnersCalculated = false;
