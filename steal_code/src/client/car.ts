@@ -9,7 +9,7 @@ import Earth from './earth'
 import {
     Lensflare,
     LensflareElement,
-} from 'three/examples/jsm/objects/Lensflare.js'
+} from 'three/examples/jsm/objects/Lensflare'
 
 export enum upgrades {
     DASH, JUMP, SPEED, BULLET_COUNT, BULLET_SPEED

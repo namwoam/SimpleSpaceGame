@@ -5,7 +5,7 @@ import Physics from './physics'
 import {
     Lensflare,
     LensflareElement,
-} from 'three/examples/jsm/objects/Lensflare.js'
+} from 'three/examples/jsm/objects/Lensflare'
 import { CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer'
 
 export default class Player {

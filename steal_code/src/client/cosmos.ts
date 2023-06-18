@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import {
     Lensflare,
     LensflareElement,
-} from 'three/examples/jsm/objects/Lensflare.js'
+} from 'three/examples/jsm/objects/Lensflare'
 
 export default class Cosmos {
     constructor(scene: THREE.Scene, light: THREE.Light) {
