@@ -348,8 +348,7 @@ export default class Game {
 
         //this.cannonDebugRenderer.update()
 
-        this.car.update()
-
+        this.car.update(delta)
         Object.keys(this.players).forEach((p) => {
             this.players[p].update()
         })

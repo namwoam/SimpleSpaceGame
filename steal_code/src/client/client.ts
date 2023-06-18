@@ -50,7 +50,7 @@ const stats = Stats()
 document.body.appendChild(stats.dom)
 
 const clock = new THREE.Clock()
-let delta
+let delta , audio_delta=0
 
 const renderPass = new RenderPass( scene, camera );
 composer.addPass( renderPass );
@@ -64,9 +64,15 @@ function animate() {
     delta = Math.min(clock.getDelta(), 0.1)
     
     game.update(delta)
-    if (game.car.shootSound.isPlaying === true ){
-        console.log(game.car.shootSound.listener.timeDelta)
+    
+    if (game.car.lastBulletShot < 0.5){
         glitchPass.enabled = true
+        if (Math.random()>0.8){
+            glitchPass.goWild = true
+        }
+        else{
+            glitchPass.goWild = false
+        }
     }
     else{
         glitchPass.enabled = false

@@ -21,6 +21,7 @@ export default class Car {
     private camera: THREE.PerspectiveCamera
     private physics: Physics
     private socket: Socket
+    lastBulletShot = 0
     dash_level = 0
     jump_level = 0
     speed_level = 0
@@ -608,6 +609,7 @@ export default class Car {
             if (this.shootSound.isPlaying) {
                 this.shootSound.stop()
             }
+            this.lastBulletShot = 0
             this.shootSound.play()
         }
     }
@@ -727,7 +729,7 @@ export default class Car {
         }, 500)
     }
 
-    update() {
+    update(delta:number) {
         this.chaseCam.getWorldPosition(this.camPos)
         this.camera.position.lerpVectors(this.camera.position, this.camPos, 0.1)
 
@@ -806,6 +808,7 @@ export default class Car {
         this.carSound.setPlaybackRate(
             Math.abs(this.forwardVelocity / 50) + Math.random() / 9
         )
+        this.lastBulletShot += delta
     }
 
     explode(v: CANNON.Vec3) {
