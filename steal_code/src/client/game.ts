@@ -290,6 +290,7 @@ export default class Game {
 
             let pingStatsHtml = 'Socket Ping Stats<br/><br/>'
             let upgradeHtml = ""
+            let skillReadyHtml = ""
             Object.keys(gameData.players).forEach((p) => {
                 this.timestamp = Date.now()
                 pingStatsHtml +=
@@ -316,6 +317,15 @@ export default class Game {
                     if (this.car.display_upgrade_hint){
                         upgradeHtml +=  "<br/> Upgrade available!<br/> <br/> Dash(1)<br/> Jump(2)<br/>Speed(3)<br/>Bullet Count(4)<br/>Bullet Speed(5)"
                     }
+                    else if (this.car.score_to_upgrade != -1){
+                        upgradeHtml += `<br/> You need ${this.car.score_to_upgrade} more points to upgrade<br/>`
+                    }
+                    if (this.car.dash_ready === true){
+                        skillReadyHtml += "<br/> Dash is ready (k)"
+                    }
+                    if (this.car.jump_ready === true){
+                        skillReadyHtml += "<br/> Jump is ready (j)"
+                    }
                 }
             })
             Object.keys(gameData.moons).forEach((m) => {
@@ -328,7 +338,7 @@ export default class Game {
             if (!this.isMobile) {
                 ;(
                     document.getElementById('pingStats') as HTMLDivElement
-                ).innerHTML = pingStatsHtml + upgradeHtml
+                ).innerHTML = pingStatsHtml + upgradeHtml + skillReadyHtml
             }
         })
     }

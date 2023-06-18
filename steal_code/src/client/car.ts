@@ -60,6 +60,7 @@ export default class Car {
     private bulletActivated: Array<boolean> = []
     private bulletId = -1
     display_upgrade_hint = false
+    score_to_upgrade = 999
 
     thrusting = false
     steering = false
@@ -75,7 +76,8 @@ export default class Car {
     private moons: { [id: string]: Moon }
 
     private upsideDownCounter = -1
-    private dash_ready = false
+    dash_ready = false
+    jump_ready = false
     private listener: THREE.AudioListener
     carSound: THREE.PositionalAudio
     private shootSound: THREE.PositionalAudio
@@ -469,9 +471,27 @@ export default class Car {
         }
         console.log("dashing")
         this.dash_ready = false
-        this.forwardVelocity = 400.0 + 120*this.dash_level
+        this.forwardVelocity = 400.0 + 120 * this.dash_level
         setTimeout(() => { this.forwardVelocity = 10.0 }, 300)
-        setTimeout(() => { this.dash_ready = true }, 1000*(3-this.dash_level*0.6))
+        setTimeout(() => { this.dash_ready = true }, 1000 * (3 - this.dash_level * 0.6))
+    }
+    jump() {
+        console.log("request jump")
+        if (this.jump_ready === false) {
+            return
+        }
+        this.jump_ready = false
+        console.log("jumping")
+        let fv = new THREE.Vector3(0 , 500 , 0);
+        fv.applyQuaternion(this.frameMesh.quaternion)
+        let f = new CANNON.Vec3(fv.x , fv.y, fv.z)
+        this.frameBody.applyForce(f , new CANNON.Vec3(0,0,0))
+        this.turretBody.applyForce(f , new CANNON.Vec3(0,0,0))
+        this.wheelLBBody.applyForce(f , new CANNON.Vec3(0,0,0))
+        this.wheelRBBody.applyForce(f , new CANNON.Vec3(0,0,0))
+        this.wheelLFBody.applyForce(f , new CANNON.Vec3(0,0,0))
+        this.wheelRFBody.applyForce(f , new CANNON.Vec3(0,0,0))
+        setTimeout(() => { this.jump_ready = true }, 1000 * (5 - this.jump_level * 1.2))
     }
     updateScore(s: number) {
         this.score = s
@@ -479,14 +499,34 @@ export default class Car {
     }
     askUpgrade() {
         let flag = false
-        if (this.past_upgrade == 0 && this.score > 100) {
-            flag = true
+        if (this.past_upgrade == 0) {
+            if (this.score > 100) {
+                flag = true
+            }
+            else {
+                this.score_to_upgrade = 100 - this.score
+            }
+
         }
-        else if (this.past_upgrade == 1 && this.score > 300) {
-            flag = true
+        else if (this.past_upgrade == 1) {
+            if (this.score > 300) {
+                flag = true
+            }
+            else {
+                this.score_to_upgrade = 300 - this.score
+            }
+
         }
-        else if (this.past_upgrade == 2 && this.score > 500) {
-            flag = true
+        else if (this.past_upgrade == 2) {
+            if (this.score > 500) {
+                flag = true
+            }
+            else {
+                this.score_to_upgrade = 500 - this.score
+            }
+        }
+        else {
+            this.score_to_upgrade = -1
         }
         this.display_upgrade_hint = flag
     }
@@ -507,6 +547,7 @@ export default class Car {
         }
         else if (target === upgrades.JUMP) {
             this.jump_level += 1
+            this.jump_ready = true
         }
         else if (target === upgrades.SPEED) {
             this.speed_level += 1
@@ -802,6 +843,17 @@ export default class Car {
         }
         this.rebuldFlare()
 
+    }
+    resetUpgrade() {
+        this.bulletCount = 3
+        this.past_upgrade = 0
+        this.dash_level = 0
+        this.jump_level = 0
+        this.speed_level = 0
+        this.bullet_count_level = 0
+        this.bullet_speed_level = 0
+        this.jump_ready = false
+        this.dash_ready = false
     }
 
     fix() {

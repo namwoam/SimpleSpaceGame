@@ -190,6 +190,9 @@ export default class UI {
             if (this.keyMap["k"]){
                 car.dash()
             }
+            if (this.keyMap["j"]){
+                car.jump()
+            }
 
             if (car.display_upgrade_hint){
                 if (this.keyMap["1"]){
