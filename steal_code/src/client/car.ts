@@ -847,7 +847,7 @@ export default class Car {
 
     }
     resetUpgrade() {
-        this.bulletCount = 3
+        this.limit_bullet_count = 3
         this.past_upgrade = 0
         this.dash_level = 0
         this.jump_level = 0

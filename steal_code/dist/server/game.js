@@ -120,6 +120,7 @@ class Game {
                         io.emit('hitCar', { p: p, pos: pos, dir: dir });
                         this.players[p].e = false;
                         this.players[socket.id].s += this.players[p].s;
+                        this.players[p].s = 0;
                     }
                 }
             });

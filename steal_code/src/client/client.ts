@@ -5,10 +5,11 @@ import { CSS2DRenderer } from 'three/examples/jsm/renderers/CSS2DRenderer'
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass';
 import { GlitchPass } from 'three/examples/jsm/postprocessing/GlitchPass';
+import { AfterimagePass } from 'three/examples/jsm/postprocessing/AfterimagePass';
+import { damp } from 'three/src/math/MathUtils';
 const scene = new THREE.Scene()
 
 const renderer = new THREE.WebGLRenderer({
-    powerPreference: "high-performance",
 })
 const composer = new EffectComposer( renderer );
 
@@ -55,7 +56,7 @@ let delta , audio_delta=0
 const renderPass = new RenderPass( scene, camera );
 composer.addPass( renderPass );
 const glitchPass = new GlitchPass();
-glitchPass.enabled = false
+glitchPass.enabled = false;
 composer.addPass( glitchPass );
 
 function animate() {

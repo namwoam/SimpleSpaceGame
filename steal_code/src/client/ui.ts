@@ -150,10 +150,10 @@ export default class UI {
                     alert('Alphanumeric screen names only please. Max length 12')
                 }
             })
-            ; (document.getElementById("colorPicker") as HTMLInputElement).addEventListener("change", (e) => { 
-                let colorString:string = (e.target as HTMLFormElement).value
-                let colorNumber:number = (parseInt(colorString.substring(1), 16))
-                game.socket.emit("updatePlayerColor" , colorNumber)
+            ; (document.getElementById("colorPicker") as HTMLInputElement).addEventListener("change", (e) => {
+                let colorString: string = (e.target as HTMLFormElement).value
+                let colorNumber: number = (parseInt(colorString.substring(1), 16))
+                game.socket.emit("updatePlayerColor", colorNumber)
                 console.log("color changed")
             })
 
@@ -164,7 +164,7 @@ export default class UI {
             car.thrusting = false
             car.steering = false
             if (this.keyMap['w'] || this.keyMap['ArrowUp']) {
-                if (car.forwardVelocity <= 20.0 + car.speed_level *15.0) car.forwardVelocity += (1.25 + car.speed_level*0.6) 
+                if (car.forwardVelocity <= 20.0 + car.speed_level * 15.0) car.forwardVelocity += (1.25 + car.speed_level * 0.6)
                 car.thrusting = true
             }
             if (this.keyMap['s'] || this.keyMap['ArrowDown']) {
@@ -187,27 +187,27 @@ export default class UI {
                     car.forwardVelocity += 2.5
                 }
             }
-            if (this.keyMap["k"]){
+            if (this.keyMap["k"]) {
                 car.dash()
             }
-            if (this.keyMap["j"]){
+            if (this.keyMap["j"]) {
                 car.jump()
             }
 
-            if (car.display_upgrade_hint){
-                if (this.keyMap["1"]){
+            if (car.display_upgrade_hint) {
+                if (this.keyMap["1"]) {
                     car.upgrade(upgrades.DASH)
                 }
-                if (this.keyMap["2"]){
+                if (this.keyMap["2"]) {
                     car.upgrade(upgrades.JUMP)
                 }
-                if (this.keyMap["3"]){
+                if (this.keyMap["3"]) {
                     car.upgrade(upgrades.SPEED)
                 }
-                if (this.keyMap["4"]){
+                if (this.keyMap["4"]) {
                     car.upgrade(upgrades.BULLET_COUNT)
                 }
-                if (this.keyMap["5"]){
+                if (this.keyMap["5"]) {
                     car.upgrade(upgrades.BULLET_SPEED)
                 }
             }
@@ -336,9 +336,11 @@ export default class UI {
         if (this.keyMap['r']) {
             if (!this.game.car.enabled) {
                 this.game.car.fix()
+                const pos = this.game.earth.getSpawnPosition()
+                this.game.car.updateScore(0)
+                this.game.car.resetUpgrade()
+                this.game.car.spawn(pos)
             }
-            const pos = this.game.earth.getSpawnPosition()
-            this.game.car.spawn(pos)
         }
     }
 
