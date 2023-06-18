@@ -80,7 +80,7 @@ export default class Car {
     jump_ready = false
     private listener: THREE.AudioListener
     carSound: THREE.PositionalAudio
-    private shootSound: THREE.PositionalAudio
+    shootSound: THREE.PositionalAudio
 
     cameraTempPosition: THREE.Object3D
 
@@ -128,7 +128,6 @@ export default class Car {
             shootSound.setVolume(2)
         })
         this.shootSound = shootSound
-
         const pipesMaterial = new THREE.MeshStandardMaterial()
         pipesMaterial.color = new THREE.Color('#ffffff')
         pipesMaterial.refractionRatio = 0

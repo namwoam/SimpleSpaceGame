@@ -2,10 +2,16 @@ import * as THREE from 'three'
 import Stats from 'three/examples/jsm/libs/stats.module'
 import Game from './game'
 import { CSS2DRenderer } from 'three/examples/jsm/renderers/CSS2DRenderer'
-
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer';
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass';
+import { GlitchPass } from 'three/examples/jsm/postprocessing/GlitchPass';
 const scene = new THREE.Scene()
 
-const renderer = new THREE.WebGLRenderer()
+const renderer = new THREE.WebGLRenderer({
+    powerPreference: "high-performance",
+})
+const composer = new EffectComposer( renderer );
+
 renderer.shadowMap.enabled = true
 renderer.shadowMap.autoUpdate = false
 //renderer.outputEncoding = THREE.sRGBEncoding
@@ -46,15 +52,29 @@ document.body.appendChild(stats.dom)
 const clock = new THREE.Clock()
 let delta
 
+const renderPass = new RenderPass( scene, camera );
+composer.addPass( renderPass );
+const glitchPass = new GlitchPass();
+glitchPass.enabled = false
+composer.addPass( glitchPass );
+
 function animate() {
     requestAnimationFrame(animate)
 
     delta = Math.min(clock.getDelta(), 0.1)
+    
     game.update(delta)
-
+    if (game.car.shootSound.isPlaying === true ){
+        console.log(game.car.shootSound.listener.timeDelta)
+        glitchPass.enabled = true
+    }
+    else{
+        glitchPass.enabled = false
+    }
+    
     renderer.render(scene, camera)
     labelRenderer.render(scene, camera)
-
+    composer.render(delta);
     stats.update()
 }
 
